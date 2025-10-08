@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>StudentXchange — Clone (Swipeable Home Cards)</title>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">SX</div>
+      <div>
+        <div style="font-weight:700">StudentXchange</div>
+        <div style="font-size:12px;color:var(--muted)">Buy • Sell • Launch</div>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <button class="btn">Login</button>
+      <button class="btn primary">Sign Up</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-left">
+        <h1>Buy & sell study material across colleges</h1>
+        <p>Notes, question papers, projects and student services listed by students. Quick, affordable and local.</p>
+        <div class="search">
+          <input placeholder="Search notes, subject or college" />
+          <button>Search</button>
+        </div>
+      </div>
+      <div class="hero-right">
+        <img src="college-students.png" alt="hero" />
+      </div>
+    </section>
+
+    <section class="home-cards-frame">
+      <div class="home-cards" id="homeCards">
+        <div class="home-card">
+          <div class="home-card-img"><img src="college.jpg" alt="launching"></div>
+          <div class="home-card-body"><h3>Student Colaboration</h3><p>Connect with like minded</p></div>
+        </div>
+        <div class="home-card">
+          <div class="home-card-img"><img src="Shop.jpg" alt="marketplace"></div>
+          <div class="home-card-body"><h3>Student Marketplace</h3><p>Buy & sell study material quickly and locally.</p></div>
+        </div>
+        <div class="home-card">
+          <div class="home-card-img"><img src="work.png" alt="freelancers"></div>
+          <div class="home-card-body"><h3>Student Freelancers</h3><p>Hire or join fellow students for projects & gigs.</p></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    (function(){
+      const cardsEl = document.getElementById('homeCards');
+      let isDown = false, startX, scrollLeft, velocity = 0, lastX = 0, lastTime = 0, rafId;
+
+      cardsEl.addEventListener('pointerdown', (e)=>{
+        isDown = true; cardsEl.classList.add('dragging');
+        startX = e.clientX; scrollLeft = cardsEl.scrollLeft;
+        lastX = e.clientX; lastTime = performance.now();
+        cardsEl.setPointerCapture(e.pointerId);
+        cancelMomentum();
+      });
+
+      cardsEl.addEventListener('pointermove', (e)=>{
+        if(!isDown) return;
+        const dx = e.clientX - startX;
+        cardsEl.scrollLeft = scrollLeft - dx;
+        const now = performance.now();
+        const dt = now - lastTime || 16;
+        velocity = (e.clientX - lastX) / dt;
+        lastX = e.clientX; lastTime = now;
+      });
+
+      cardsEl.addEventListener('pointerup', (e)=>{
+        isDown = false; cardsEl.classList.remove('dragging');
+        cardsEl.releasePointerCapture(e.pointerId);
+        startMomentum(velocity*1500);
+      });
+      cardsEl.addEventListener('pointercancel', ()=>{ isDown=false; cardsEl.classList.remove('dragging'); });
+
+      function startMomentum(initVel){
+        let v = initVel;
+        const friction = 0.95;
+        function step(){
+          cardsEl.scrollLeft -= v/60;
+          v *= friction;
+          if(Math.abs(v) > 0.5) rafId = requestAnimationFrame(step);
+        }
+        rafId = requestAnimationFrame(step);
+      }
+      function cancelMomentum(){ if(rafId) cancelAnimationFrame(rafId); rafId = null; }
+
+      cardsEl.addEventListener('wheel', (e)=>{
+        if(Math.abs(e.deltaX) < Math.abs(e.deltaY)){
+          e.preventDefault();
+          cardsEl.scrollLeft += e.deltaY;
+        }
+      }, {passive:false});
+    })();
+  </script>
+</body>
+</html>
