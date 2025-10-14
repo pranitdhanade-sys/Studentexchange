@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>StudentXchange — Clone (Swipeable Home Cards)</title>
+  <style>
+    :root{
+      --card:#ffffff; --muted:#6b7280; --accent:#0ea5e9;
+      --glass: rgba(255,255,255,0.2);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+      background: linear-gradient(135deg, #0094d8, hsl(204, 94%, 86%), #a5f3fc); background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      color:#0f172a;
+    }
+    @keyframes gradientBG {
+      0% {background-position:0% 50%;}
+      50% {background-position:100% 50%;}
+      100% {background-position:0% 50%;}
+    }
+
+    header{display:flex;align-items:center;justify-content:space-between;padding:20px 28px;background:linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);box-shadow:0 1px 0 rgba(15,23,42,0.04)}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:44px;height:44px;background:linear-gradient(90deg,#06b6d4,#0ea5e9);border-radius:10px;display:grid;place-items:center;color:white;font-weight:700}
+    .nav-actions{display:flex;gap:10px}
+    .btn{padding:9px 14px;border-radius:8px;border:1px solid rgba(15,23,42,0.06);background:white;cursor:pointer}
+    .btn.primary{background:var(--accent);color:white;border:0}
+
+    main{max-width:1100px;margin:28px auto;padding:0 20px}
+    .hero{display:grid;grid-template-columns:1fr 420px;gap:28px;align-items:center}
+    .hero-left h1{font-size:34px;margin:0 0 12px}
+    .hero-left p{color:var(--muted);margin:0 0 18px}
+    .search{display:flex;gap:10px}
+    .search input{flex:1;padding:12px 14px;border-radius:10px;border:1px solid rgba(15,23,42,0.06)}
+    .search button{padding:12px 16px;background:var(--accent);color:white;border-radius:10px;border:0}
+    .hero-right img{width:100%;border-radius:12px;display:block}
+
+    .home-cards-frame{position:relative; margin-top:40px;}
+    .home-cards{display:flex;gap:18px;padding:22px 18px;overflow:hidden;scroll-behavior:smooth; -webkit-overflow-scrolling:touch}
+    .home-card{flex:0 0 300px;background:rgba(255,255,255,0.2);backdrop-filter: blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:14px;box-shadow:0 8px 20px rgba(2,6,23,0.06);overflow:hidden;position:relative;transform-origin:center center;transition:transform .18s ease, box-shadow .18s ease}
+    .home-card-img{height:180px;overflow:hidden}
+    .home-card-img img{width:100%;height:100%;object-fit:cover;display:block;transform-origin:center center;transition:transform .25s ease}
+    .home-card-body{padding:14px;color:white;}
+    .home-card h3{margin:0 0 6px;font-size:16px}
+    .home-card p{margin:0;font-size:13px}
+
+    .home-card .shine-layer{position:absolute;inset:0;pointer-events:none;border-radius:14px;mix-blend-mode:screen}
+    .home-cards.dragging{cursor:grabbing}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">SX</div>
+      <div>
+        <div style="font-weight:700">StudentXchange</div>
+        <div style="font-size:12px;color:var(--muted)">Buy • Sell • Launch</div>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <button class="btn">Login</button>
+      <button class="btn primary">Sell Notes</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-left">
+        <h1>Buy & sell study material across colleges</h1>
+        <p>Notes, question papers, projects and student services listed by students. Quick, affordable and local.</p>
+        <div class="search">
+          <input placeholder="Search notes, subject or college" />
+          <button>Search</button>
+        </div>
+      </div>
+      <div class="hero-right">
+        <img src="https://picsum.photos/seed/hero/900/600" alt="hero" />
+      </div>
+    </section>
+
+    <section class="home-cards-frame">
+      <div class="home-cards" id="homeCards">
+        <div class="home-card">
+          <div class="home-card-img"><img src="https://picsum.photos/seed/h1/600/400" alt="launching"></div>
+          <div class="home-card-body"><h3>Student Launching</h3><p>Launch your services or products to your college network.</p></div>
+          <div class="shine-layer"></div>
+        </div>
+        <div class="home-card">
+          <div class="home-card-img"><img src="https://picsum.photos/seed/h2/600/400" alt="marketplace"></div>
+          <div class="home-card-body"><h3>Student Marketplace</h3><p>Buy & sell study material quickly and locally.</p></div>
+          <div class="shine-layer"></div>
+        </div>
+        <div class="home-card">
+          <div class="home-card-img"><img src="https://picsum.photos/seed/h3/600/400" alt="freelancers"></div>
+          <div class="home-card-body"><h3>Student Freelancers</h3><p>Hire or join fellow students for projects & gigs.</p></div>
+          <div class="shine-layer"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    (function(){
+      const cardsEl = document.getElementById('homeCards');
+      const cards = Array.from(cardsEl.querySelectorAll('.home-card'));
+      let isDown = false, startX, scrollLeft, velocity = 0, lastX = 0, lastTime = 0, rafId;
+
+      cardsEl.addEventListener('pointerdown', (e)=>{
+        isDown = true; cardsEl.classList.add('dragging');
+        startX = e.clientX; scrollLeft = cardsEl.scrollLeft;
+        lastX = e.clientX; lastTime = performance.now();
+        cardsEl.setPointerCapture(e.pointerId);
+        cancelMomentum();
+      });
+
+      cardsEl.addEventListener('pointermove', (e)=>{
+        if(!isDown) return;
+        const dx = e.clientX - startX;
+        cardsEl.scrollLeft = scrollLeft - dx;
+        const now = performance.now();
+        const dt = now - lastTime || 16;
+        velocity = (e.clientX - lastX) / dt;
+        lastX = e.clientX; lastTime = now;
+      });
+
+      cardsEl.addEventListener('pointerup', (e)=>{
+        isDown = false; cardsEl.classList.remove('dragging');
+        cardsEl.releasePointerCapture(e.pointerId);
+        startMomentum(velocity*1500);
+      });
+      cardsEl.addEventListener('pointercancel', ()=>{ isDown=false; cardsEl.classList.remove('dragging'); });
+
+      function startMomentum(initVel){
+        let v = initVel;
+        const friction = 0.95;
+        function step(){
+          cardsEl.scrollLeft -= v/60;
+          v *= friction;
+          if(Math.abs(v) > 0.5) rafId = requestAnimationFrame(step);
+        }
+        rafId = requestAnimationFrame(step);
+      }
+      function cancelMomentum(){ if(rafId) cancelAnimationFrame(rafId); rafId = null; }
+
+      cards.forEach(card=>{
+        const img = card.querySelector('.home-card-img img');
+        const shine = card.querySelector('.shine-layer');
+        function onPointerMove(e){
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+          const px = (x / rect.width) - 0.5; const py = (y / rect.height) - 0.5;
+          const rotateY = px * 12; const rotateX = -py * 10;
+          card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.03)`;
+          img.style.transform = `translate(${px*6}px, ${py*6}px) scale(1.06)`;
+          const percentX = (x/rect.width)*100; const percentY = (y/rect.height)*100;
+          shine.style.background = `radial-gradient(circle at ${percentX}% ${percentY}%, rgba(255,255,255,0.6), rgba(255,255,255,0.0) 45%)`;
+        }
+        function onLeave(){ card.style.transform=''; img.style.transform=''; shine.style.background='none'; }
+        card.addEventListener('pointerenter', ()=>{ card.style.transition='transform .12s ease'; });
+        card.addEventListener('pointermove', onPointerMove);
+        card.addEventListener('pointerleave', onLeave);
+      });
+
+      cardsEl.addEventListener('wheel', (e)=>{
+        if(Math.abs(e.deltaX) < Math.abs(e.deltaY)){
+          e.preventDefault();
+          cardsEl.scrollLeft += e.deltaY;
+        }
+      }, {passive:false});
+
+    })();
+  </script>
+</body>
+</html>
